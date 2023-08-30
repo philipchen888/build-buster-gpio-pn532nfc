@@ -1,0 +1,383 @@
+This is to build Debian Buster gpio and pn532nfc test sdcard image for following SBC's:
+rpi4b  ( Raspberry Pi 4B )
+radxa  ( Rock Pi 4B plus )
+rk3328 ( Renegade ROC-RK3328-CC )
+tinker ( ASUS TinkerBoard )
+
+Parts required:
+1. Seeed Grove starter kit LED, button, buzzer, Grove-LCD RGB Backlight V3.0 JHD1313M2.
+2. Analog Servo.
+3. Adafruit SSD1306 128x32 SPI OLED Display.
+4. nfc host controller card: Adafruit PN532 NFC Shield.
+5. Mifare Classic card and Mifare Ultralight tag.
+
+The following 8 gpio tests are included: ( see below for tests summary )
+1. uart test
+2. led test
+3. button test
+4. pwm led test
+5. i2c lcd test
+6. tongsong
+7. servo
+8. spi oled test
+
+The following 8 pn532nfc tests are included:
+1. iso14443a_uid  ( read nfc card's uid )
+2. memdump        ( dump all memory in the nfc cards )
+3. readMifare     ( write read memory in the nfc cards )
+4. ntag21x_rw     ( write read mifareultralight )
+5. memerase       ( erase all memory in the nfc cards )
+6. formatndef     ( change mifareclassic to mifareclassic_ndef )
+7. updatendef     ( write read mifareclassic_ndef )
+8. ndeftoclassic  ( change mifareclassic_ndef to mifareclassic )
+
+Steps to build Debian Buster gpio and pn532nfc test sdcard image:
+
+1. git clone https://github.com/philipchen888/build-buster-gpio-pn532nfc.git
+   sudo apt-get install build-essential git libssl-dev nmap net-tools libncurses5-dev libncursesw5-dev dnsutils vsftpd ftp binfmt-support qemu-user-static scons libncurses5-dev libncursesw5-dev libdbus-glib-1-dev libbluetooth-dev python-dev python-setuptools python3-dev python3-pip python3-setuptools libcurl4-openssl-dev gettext dbus-x11 chrpath diffstat gawk texinfo curl flex bison device-tree-compiler python swig
+
+2. Install cross compiler and live-build:
+   wget https://releases.linaro.org/components/toolchain/binaries/latest-7/aarch64-linux-gnu/gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz
+   sudo tar xvf gcc-linaro-7.5.0-2019.12-x86_64_aarch64-linux-gnu.tar.xz  -C /usr/local/
+   wget https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
+   sudo tar xvf gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz -C /usr/local/
+   sudo apt-get install debootstrap debhelper kpartx gdisk devscripts dh-systemd isolinux po4a
+   wget http://deb.debian.org/debian/pool/main/l/live-build/live-build_20230502.tar.xz
+   tar xvf live-build_20230502.tar.xz
+   cd live-build
+   vi Makefile ( change manpages/$${LANGUAGE} to manpages/po/$${LANGUAGE} )
+   sudo make install
+
+3. cd ~/build-buster-gpio-pn532nfc/rpi4b
+   git clone https://github.com/raspberrypi/linux --depth=1 -b rpi-5.4.y
+   cd linux; mkdir tmp; cd tmp; mkdir lib;
+   cd ../../; mkdir out;
+
+   make all
+   The result is in ./out/sdcard.img
+   make cleanall
+
+   sudo dd if=./out/sdcard.img of=/dev/sda bs=4096 conv=notrunc,fsync
+   Eject sdcard, plugin sdcard. 
+   cp ./gpiotest/* /media/$USER/b*/home/linaro
+   cp ./pn532nfc/* /media/$USER/b*/home/linaro
+   sync
+   Eject sdcard
+
+4. cd ~/build-buster-gpio-pn532nfc/radxa
+   git clone https://github.com/u-boot/u-boot.git -b u-boot-2023.07.y
+   git clone https://github.com/radxa/kernel --depth=1 -b release-4.4-rockpi4
+   cd kernel; mkdir tmp; cd tmp; mkdir lib;
+   cd ../../; mkdir out;
+
+   make all
+   The result is in ./out/sdcard.img
+   make cleanall
+
+   sudo dd if=./out/sdcard.img of=/dev/sda bs=4096 conv=notrunc,fsync
+   Eject sdcard, plugin sdcard. 
+   cp ./gpiotest/* /media/$USER/b*/home/linaro
+   cp ./pn532nfc/* /media/$USER/b*/home/linaro
+   sync
+   Eject sdcard
+
+5. cd ~/build-buster-gpio-pn532nfc/rk3328
+   git clone https://github.com/u-boot/u-boot.git -b u-boot-2023.07.y
+   git clone https://github.com/FireflyTeam/kernel --depth=1 -b rk3328/firefly
+   cd kernel; mkdir tmp; cd tmp; mkdir lib;
+   cd ../../; mkdir out;
+
+   make all
+   The result is in ./out/sdcard.img
+   make cleanall
+
+   sudo dd if=./out/sdcard.img of=/dev/sda bs=4096 conv=notrunc,fsync
+   Eject sdcard, plugin sdcard. 
+   cp ./gpiotest/* /media/$USER/b*/home/linaro
+   cp ./pn532nfc/* /media/$USER/b*/home/linaro
+   sync
+   Eject sdcard
+
+6. cd ~/build-buster-gpio-pn532nfc/tinker
+   git clone https://github.com/TinkerBoard/debian_u-boot.git --depth=1 -b release
+   git clone https://github.com/TinkerBoard/debian_kernel.git --depth=1 -b release
+   cd debian_kernel; mkdir tmp; cd tmp; mkdir lib;
+   cd ../../; mkdir out;
+
+   make all
+   The result is in ./out/sdcard.img
+   make cleanall
+
+   sudo dd if=./out/sdcard.img of=/dev/sda bs=4096 conv=notrunc,fsync
+   Eject sdcard, plugin sdcard. 
+   cp ./gpiotest/* /media/$USER/b*/home/linaro
+   cp ./pn532nfc/* /media/$USER/b*/home/linaro
+   sync
+   Eject sdcard
+
+Plugin usb wifi dongle to rk3328.
+Plugin sdcard to SBC
+Login:
+Username: linaro
+Password: linaro
+Disable power saving and screen saver.
+uname -a
+lsb_release -a
+Setup wifi:
+sudo nmcli dev wifi connect "SSID" password "PASSWORD"
+sudo dpkg-reconfigure tzdata
+sudo dpkg-reconfigure locales
+date
+sudo apt update
+sudo apt upgrade
+sync
+
+sudo apt install python-dev python-setuptools python3-pip python3-setuptools python3-dev python3-wheel python3-smbus
+sudo pip3 install spidev serial pyserial python-periphery smbus2
+
+For rpi4b only:
+wget https://project-downloads.drogon.net/wiringpi-latest.deb
+sudo dpkg -i wiringpi-latest.deb
+gpio -v
+
+gcc gpio_test.c -o gpio_test
+sudo ./gpio_test
+sudo ./gpio_test.py
+
+Check kernel driver readiness for rpi4b:
+sudo cat /proc/device-tree/soc/serial@7e201400/status  ( uart 2 )
+sudo cat /proc/device-tree/soc/pwm@7e20c000/status  ( pwm 1 )
+sudo cat /proc/device-tree/soc/i2c@7e804000/status  ( i2c-1 )
+sudo cat /proc/device-tree/soc/spi@7e204000/status  ( spi-0 )
+
+Check kernel driver readiness for radxa:
+sudo cat /proc/device-tree/serial@ff370000/status ( uart 4 )
+sudo cat /proc/device-tree/pwm@ff420010/status  ( pwm 1 )
+sudo cat /proc/device-tree/i2c@ff160000/status  ( i2c-7 )
+sudo cat /proc/device-tree/spi@ff1e0000/status  ( spi-2 )
+
+Check kernel driver readiness for rk3328:
+sudo cat /proc/device-tree/serial@ff120000/status ( uart 1 )
+sudo cat /proc/device-tree/pwm@ff1b0020/status  ( pwm 2 )
+sudo cat /proc/device-tree/i2c@ff160000/status  ( i2c-1 )
+sudo cat /proc/device-tree/spi@ff190000/status  ( spi-0 )
+
+Check kernel driver readiness for tinker:
+sudo cat /proc/device-tree/serial@ff1c0000/status ( uart 4 )
+sudo cat /proc/device-tree/pwm@ff680030/status  ( pwm 3 )
+sudo cat /proc/device-tree/i2c@ff140000/status  ( i2c-1 )
+sudo cat /proc/device-tree/spi@ff130000/status  ( spi-2 )
+
+-----------------------------------------------------------------------------
+
+Here is the summary of the gpio tests:
+
+These tests used Seeed Grove starter kit LED, button, buzzer, Grove-LCD RGB Backlight V3.0 JHD1313M2, Analog Servo and Adafruit SSD1306 128x32 SPI OLED Display.
+
+1. uart test.
+   This test will send uart tx to uart rx for loopback.
+   It sends 0 to 255 to uart tx and receives 0 to 255 from uart rx.
+   Connect gpio pin 27 to pin 28. ( rpi4b uart 2 ).
+   Connect gpio pin 19 to pin 21. ( radxa uart 4 ).
+   Connect gpio pin  8 to pin 10. ( rk3328 uart 1 ).
+   Connect gpio pin 13 to pin 15. ( tinker uart 4 ).
+
+2. led test.
+   This test will blink led 5 times.
+   Connect gpio pin 18 to led control. ( rpi4b ).
+   Connect gpio pin 16 to led control. ( radxa ).
+   Connect gpio pin 18 to led control. ( rk3328 ).
+   Connect gpio pin 16 to led control. ( tinker ).
+   Connect gpio pin  2 to led 5V.
+   Connect gpio pin  9 to led ground.
+
+3. button test.
+   Push button 10 times. The led will on/off 10 times.
+   Connect gpio pin 18 to led control. ( rpi4b ).
+   Connect gpio pin 16 to led control. ( radxa ).
+   Connect gpio pin 18 to led control. ( rk3328 ).
+   Connect gpio pin 16 to led control. ( tinker ).
+   Connect gpio pin  2 to led 5V.
+   Connect gpio pin  9 to led ground.
+   Connect gpio pin 16 to button control. ( rpi4b ).
+   Connect gpio pin 18 to button control. ( radxa ).
+   Connect gpio pin 16 to button control. ( rk3328 ).
+   Connect gpio pin 18 to button control. ( tinker ).
+   Connect gpio pin  4 to button 5V.
+   Connect gpio pin  6 to button ground.
+
+4. pwm led test.
+   This test will dim led 10 times.
+   Connect gpio pin 33 to led control. ( rpi4b pwm 1 ).
+   Connect gpio pin 13 to led control. ( radxa pwm 1 ).
+   Connect gpio pin 12 to led control. ( rk3328 pwm 2 ).
+   Connect gpio pin 32 to led control. ( tinker pwm 3 ).
+   Connect gpio pin  2 to led 5V.
+   Connect gpio pin  9 to led ground.
+
+5. i2c lcd test.
+   This test will change lcd backlight color for 5 cycles.
+   Then it will display two sentences on lcd display.
+   Connect gpio pin  3 to lcd display SDA. ( rpi4b i2c-1 ).
+   Connect gpio pin  5 to lcd display SCL.
+   Connect gpio pin  3 to lcd display SDA. ( radxa i2c-7 ).
+   Connect gpio pin  5 to lcd display SCL.
+   Connect gpio pin 27 to lcd display SDA. ( rk3328 i2c-1 ).
+   Connect gpio pin 28 to lcd display SCL.
+   Connect gpio pin  3 to lcd display SDA. ( tinker i2c-1 ).
+   Connect gpio pin  5 to lcd display SCL.
+   Connect gpio pin  2 to lcd display 5V.
+   Connect gpio pin  9 to lcd display ground.
+
+6. tongsong.
+   This test will generate song using buzzer.
+   Connect gpio pin 33 to buzzer control. ( same as 4. pwm led test )
+   Connect gpio pin  2 to buzzer 5V.
+   Connect gpio pin  9 to buzzer ground.
+
+7. servo.
+   This test will turn servo 45 degree - 90 degree - 45 degree - 0 degree etc.
+   Connect gpio pin 33 to servo control. ( same as 4. pwm led test )
+   Connect gpio pin  2 to servo 5V.
+   Connect gpio pin  9 to servo ground.
+
+8. spi oled test.
+   This test will show some ascii characters on the oled display.
+   Connect gpio pin 18 to oled display DC.  ( rpi4b spi-0 )
+   Connect gpio pin 24 to oled display CS.
+   Connect gpio pin 19 to oled display TX.
+   Connect gpio pin 23 to oled display CLK.
+   Connect gpio pin 16 to oled display DC.  ( radxa spi-2 )
+   Connect gpio pin 33 to oled display CS.
+   Connect gpio pin 29 to oled display TX.
+   Connect gpio pin  7 to oled display CLK.
+   Connect gpio pin 18 to oled display DC.  ( rk3328 spi-0 )
+   Connect gpio pin 24 to oled display CS.
+   Connect gpio pin 19 to oled display TX.
+   Connect gpio pin 23 to oled display CLK.
+   Connect gpio pin 16 to oled display DC.  ( tinker spi-2 )
+   Connect gpio pin 24 to oled display CS.
+   Connect gpio pin 19 to oled display TX.
+   Connect gpio pin 23 to oled display CLK.
+   Connect gpio pin  1 to oled display 3.3V.
+   Connect gpio pin  9 to oled display ground.
+
+-----------------------------------------------------------------------------
+
+Datasheet of pn532 is in https://www.nxp.com/docs/en/nxp/data-sheets/PN532_C1.pdf
+application: https://www.nxp.com/docs/en/user-guide/141520.pdf
+https://raspberrypi.stackexchange.com/questions/109773/how-can-rpi-spi-python-read-the-mfrc522-nfc-module
+NFC info see https://www.nxp.com/docs/en/application-note/AN1305.pdf
+             https://www.nxp.com/docs/en/data-sheet/MF0ICU2.pdf
+examples: see https://github.com/nfc-tools/libfreefare/
+Tutorial: see https://learn.adafruit.com/adafruit-pn532-rfid-nfc/mifare
+To use Adafruit PN532 NFC Shield see https://learn.adafruit.com/adafruit-pn532-rfid-nfc
+https://pub.dev/documentation/grove/latest/grove/GroveNfcPn532Definitions-class.html
+
+-----------------------------------------------------------------------------
+
+Here is the summary of the pn532nfc tests:
+
+For spi:
+   Connect SBC gpio pin 19 to pn532nfc MOSI.  ( rpi4b spi-0 )
+   Connect SBC gpio pin 24 to pn532nfc SSEL.
+   Connect SBC gpio pin 21 to pn532nfc MISO.
+   Connect SBC gpio pin 23 to pn532nfc SCLK.
+   Connect SBC gpio pin 29 to pn532nfc MOSI.  ( radxa spi-2 )
+   Connect SBC gpio pin 33 to pn532nfc SSEL.
+   Connect SBC gpio pin 31 to pn532nfc MISO.
+   Connect SBC gpio pin  7 to pn532nfc SCLK.
+   Connect SBC gpio pin 19 to pn532nfc MOSI.  ( rk3328 spi-0 )
+   Connect SBC gpio pin 24 to pn532nfc SSEL.
+   Connect SBC gpio pin 21 to pn532nfc MISO.
+   Connect SBC gpio pin 23 to pn532nfc SCLK.
+   Connect SBC gpio pin 19 to pn532nfc MOSI.  ( tinker spi-2 )
+   Connect SBC gpio pin 24 to pn532nfc SSEL.
+   Connect SBC gpio pin 21 to pn532nfc MISO.
+   Connect SBC gpio pin 23 to pn532nfc SCLK.
+   Connect SBC gpio pin  2 to pn532nfc 5V.
+   Connect SBC gpio pin  9 to pn532nfc ground.
+
+For i2c:
+   Connect SBC gpio pin  3 to pn532nfc SDA. ( rpi4b i2c-1 ).
+   Connect SBC gpio pin  5 to pn532nfc SCL.
+   Connect SBC gpio pin  3 to pn532nfc SDA. ( radxa i2c-7 ).
+   Connect SBC gpio pin  5 to pn532nfc SCL.
+   Connect SBC gpio pin 27 to pn532nfc SDA. ( rk3328 i2c-1 ).
+   Connect SBC gpio pin 28 to pn532nfc SCL.
+   Connect SBC gpio pin  3 to pn532nfc SDA. ( tinker i2c-1 ).
+   Connect SBC gpio pin  5 to pn532nfc SCL.
+   Connect SBC gpio pin  2 to pn532nfc 5V.
+   Connect SBC gpio pin  9 to pn532nfc ground.
+
+For spi:
+make -f Makefile.spi all   ( tinker spi is not working for pn532nfc )
+For i2c:
+make -f Makefile.i2c all   ( radxa i2c is not working for pn532nfc )
+
+sudo ./iso14443a_uid   ( for mifareclassic and mifareultralight )
+sudo ./memdump         ( for mifareclassic and mifareultralight )
+sudo ./readMifare      ( for mifareclassic and mifareultralight )
+sudo ./memdump         ( for mifareclassic and mifareultralight )
+sudo ./ntag21x_rw      ( for mifareultralight )
+sudo ./memdump         ( for mifareultralight )
+sudo ./memerase        ( for mifareclassic and mifareultralight )
+sudo ./memdump         ( for mifareclassic and mifareultralight )
+sudo ./formatndef      ( for mifareclassic )
+sudo ./memdump         ( for mifareclassic )
+sudo ./updatendef      ( for mifareclassic )
+sudo ./memdump         ( for mifareclassic )
+sudo ./memerase        ( for mifareclassic )
+sudo ./memdump         ( for mifareclassic )
+sudo ./ndeftoclassic   ( for mifareclassic )
+sudo ./memdump         ( for mifareclassic )
+sudo ./readMifare      ( for mifareclassic )
+sudo ./memdump         ( for mifareclassic )
+sudo ./memerase        ( for mifareclassic )
+sudo ./memdump         ( for mifareclassic )
+
+For spi:
+sudo python3 iso14443a_uid.py spi  ( for mifareclassic and mifareultralight )
+sudo python3 memdump.py spi        ( for mifareclassic and mifareultralight )
+sudo python3 readMifare.py spi     ( for mifareclassic and mifareultralight )
+sudo python3 memdump.py spi        ( for mifareclassic and mifareultralight )
+sudo python3 ntag21x_rw.py spi     ( for mifareultralight )
+sudo python3 memdump.py spi        ( for mifareultralight )
+sudo python3 memerase.py spi       ( for mifareclassic and mifareultralight )
+sudo python3 memdump.py spi        ( for mifareclassic and mifareultralight )
+sudo python3 formatndef.py spi     ( for mifareclassic )
+sudo python3 memdump.py spi        ( for mifareclassic )
+sudo python3 updatendef.py spi     ( for mifareclassic )
+sudo python3 memdump.py spi        ( for mifareclassic )
+sudo python3 memerase.py spi       ( for mifareclassic )
+sudo python3 memdump.py spi        ( for mifareclassic )
+sudo python3 ndeftoclassic.py spi  ( for mifareclassic )
+sudo python3 memdump.py spi        ( for mifareclassic )
+sudo python3 readMifare.py spi     ( for mifareclassic )
+sudo python3 memdump.py spi        ( for mifareclassic )
+sudo python3 memerase.py spi       ( for mifareclassic )
+sudo python3 memdump.py spi        ( for mifareclassic )
+
+For i2c:
+sudo python3 iso14443a_uid.py i2c  ( for mifareclassic and mifareultralight )
+sudo python3 memdump.py i2c        ( for mifareclassic and mifareultralight )
+sudo python3 readMifare.py i2c     ( for mifareclassic and mifareultralight )
+sudo python3 memdump.py i2c        ( for mifareclassic and mifareultralight )
+sudo python3 ntag21x_rw.py i2c     ( for mifareultralight )
+sudo python3 memdump.py i2c        ( for mifareultralight )
+sudo python3 memerase.py i2c       ( for mifareclassic and mifareultralight )
+sudo python3 memdump.py i2c        ( for mifareclassic and mifareultralight )
+sudo python3 formatndef.py i2c     ( for mifareclassic )
+sudo python3 memdump.py i2c        ( for mifareclassic )
+sudo python3 updatendef.py i2c     ( for mifareclassic )
+sudo python3 memdump.py i2c        ( for mifareclassic )
+sudo python3 memerase.py i2c       ( for mifareclassic )
+sudo python3 memdump.py i2c        ( for mifareclassic )
+sudo python3 ndeftoclassic.py i2c  ( for mifareclassic )
+sudo python3 memdump.py i2c        ( for mifareclassic )
+sudo python3 readMifare.py i2c     ( for mifareclassic )
+sudo python3 memdump.py i2c        ( for mifareclassic )
+sudo python3 memerase.py i2c       ( for mifareclassic )
+sudo python3 memdump.py i2c        ( for mifareclassic )
+
+-----------------------------------------------------------------------------
